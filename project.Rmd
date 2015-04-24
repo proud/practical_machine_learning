@@ -1,0 +1,171 @@
+---
+title: "Practical Machine Learning - Course Project"
+output:
+  html_document:
+    toc: true
+    theme: readable
+---
+
+##Preface
+
+Given the training data provided by the [Weight Lifting Exercises Dataset][1] we were asked to build a model to predict the outcome of twenty different test cases.
+
+Extensive instructions are available on the [Coursera website][2].
+
+##Basic setup
+
+Prior to analyze our data we performed some setup operations:
+
+* Loading libraries
+* Setting a fixed seed for reproducibility
+* Enabling multicore processing (optional, but highly recommended)
+
+```{r, message=FALSE}
+library(caret)
+library(doMC)
+
+set.seed(56773)
+
+registerDoMC(cores = 8)
+```
+##Loading the data
+
+We assume that both the training and the testing data were previously made available in the current directory.
+```{r, message=FALSE}
+data_train <- read.csv("pml-training.csv")
+data_test <- read.csv("pml-testing.csv")
+```
+
+##Features extraction
+
+First of all we looked at the data and removed all columns that weren't predictors.
+```{r, message=FALSE}
+data_train$X <- NULL
+data_train$user_name <- NULL
+data_train$raw_timestamp_part_1 <- NULL
+data_train$raw_timestamp_part_2 <- NULL
+data_train$cvtd_timestamp <- NULL
+data_train$new_window <- NULL
+data_train$num_window <- NULL
+```
+
+Then using the [caret::nearZeroVar][3] function we searched for predictors with zero or near zero variance and removed them from our training set.
+```{r, message=FALSE}
+nzv <- nearZeroVar(data_train)
+data_train <- data_train[,-nzv]
+```
+
+By looking at the data we saw a lot of columns presenting missing values. We then removed also those columns.
+```{r, message=FALSE}
+data_train <- data_train[, !apply(data_train , 2, function(x) any(is.na(x)))]
+```
+
+After all this operations those were our selected features:
+
+```{r, message=FALSE}
+str(data_train[,-53])
+```
+
+##Subsetting into training and testing datasets
+
+We splitted our data into two sets:
+
+* 60% for model training
+* 40% for model validation
+
+```{r, message=FALSE}
+trainset <- createDataPartition(data_train$classe, p = 0.60, list = FALSE)
+traindata <- data_train[trainset,]
+testdata <- data_train[-trainset,]
+```
+
+##Model evaluation
+
+We evaluated three different models, searching for the most accurate:
+
+* Classification Tree (`rpart`)
+* Random Forest (`parRF`)
+* Boosted Regression Model (`gbm`)
+
+###Random Forest
+
+```{r, message=FALSE}
+model_rf <- train(classe ~ ., method="parRF", data=traindata)
+```
+
+```{r, message=FALSE}
+# in-sample accuracy
+prediction <- predict(model_rf, traindata)
+cm <- confusionMatrix(prediction, traindata$classe)
+print(cm$overall)
+```
+
+```{r, message=FALSE}
+# out-of-sample accuracy
+prediction <- predict(model_rf, testdata)
+cm <- confusionMatrix(prediction, testdata$classe)
+print(cm$overall)
+```
+
+###Classification Tree
+
+```{r, message=FALSE}
+model_rpart <- train(classe ~ ., method="rpart", data=traindata)
+```
+
+```{r, message=FALSE}
+# in-sample accuracy
+prediction <- predict(model_rpart, traindata)
+cm <- confusionMatrix(prediction, traindata$classe)
+print(cm$overall)
+```
+
+```{r, message=FALSE}
+# out-of-sample accuracy
+prediction <- predict(model_rpart, testdata)
+cm <- confusionMatrix(prediction, testdata$classe)
+print(cm$overall)
+```
+
+###Boosted Regression Model
+
+```{r, message=FALSE}
+model_gbm <- train(classe ~ ., method="gbm", data=traindata, verbose=FALSE)
+```
+
+```{r, message=FALSE}
+# in-sample accuracy
+prediction <- predict(model_gbm, traindata)
+cm <- confusionMatrix(prediction, traindata$classe)
+print(cm$overall)
+```
+
+```{r, message=FALSE}
+# out-of-sample accuracy
+prediction <- predict(model_gbm, testdata)
+cm <- confusionMatrix(prediction, testdata$classe)
+print(cm$overall)
+```
+##Method choice
+
+As we can see more clearly in the following graph the Random Forest (`rf`) method reached the best accuracy overall.
+
+```{r, message=FALSE}
+model_accuracy <- matrix(c(0.9928626, 0.9907414, 0.9946041, 0.4837806, 0.4747172, 0.4928520, 9.652052e-01, 9.609098e-01, 9.691503e-01), ncol=3, byrow=TRUE)
+colnames(model_accuracy) <- c("Mean", "Lower", "Upper")
+rownames(model_accuracy) <- c("rf", "rpart", "gbm")
+model_accuracy <- data.frame(model_accuracy)
+barplot(model_accuracy$Mean, horiz=TRUE, las=1, border=NA, names.arg=c('RF', 'RPART', 'GBM'), cex.names=1, main="Model Accuracy")
+```
+
+##Predicting against our test dataset
+
+```{r, message=FALSE}
+
+prediction <- predict(model_rf, data_test)
+print(prediction)
+```
+
+[1]: http://groupware.les.inf.puc-rio.br/har
+[2]: https://class.coursera.org/predmachlearn-013/human_grading/view/courses/973548/assessments/4/submissions
+[3]: http://www.inside-r.org/packages/cran/caret/docs/nearZeroVar
