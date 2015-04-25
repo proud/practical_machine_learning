@@ -119,9 +119,9 @@ data_train$num_window &lt;- NULL</code></pre>
 <p>Then using the <a href="http://www.inside-r.org/packages/cran/caret/docs/nearZeroVar">caret::nearZeroVar</a> function we searched for predictors with zero or near zero variance and removed them from our training set.</p>
 <pre class="r"><code>nzv &lt;- nearZeroVar(data_train)
 data_train &lt;- data_train[,-nzv]</code></pre>
-<p>By looking at the data we saw a lot of columns presenting missing values. We then removed also those columns.</p>
+<p>By looking at the data we saw a lot of columns presenting missing values. Then we removed also those columns.</p>
 <pre class="r"><code>data_train &lt;- data_train[, !apply(data_train , 2, function(x) any(is.na(x)))]</code></pre>
-<p>After all this operations those were our selected features:</p>
+<p>After all these operations our selected features were as follows:</p>
 <pre class="r"><code>str(data_train[,-53])</code></pre>
 <pre><code>## 'data.frame':    19622 obs. of  52 variables:
 ##  $ roll_belt           : num  1.41 1.41 1.42 1.48 1.48 1.45 1.42 1.42 1.43 1.45 ...
@@ -190,7 +190,7 @@ testdata &lt;- data_train[-trainset,]</code></pre>
 </div>
 <div id="model-evaluation" class="section level2">
 <h2>Model evaluation</h2>
-<p>We evaluated three different models, searching for the most accurate:</p>
+<p>We evaluated three different models, searching for the most accurate one:</p>
 <ul>
 <li>Classification Tree (<code>rpart</code>)</li>
 <li>Random Forest (<code>parRF</code>)</li>
@@ -199,8 +199,6 @@ testdata &lt;- data_train[-trainset,]</code></pre>
 <div id="random-forest" class="section level3">
 <h3>Random Forest</h3>
 <pre class="r"><code>model_rf &lt;- train(classe ~ ., method=&quot;parRF&quot;, data=traindata)</code></pre>
-<pre><code>## Warning in nominalTrainWorkflow(x = x, y = y, wts = weights, info =
-## trainInfo, : There were missing values in resampled performance measures.</code></pre>
 <pre class="r"><code># in-sample accuracy
 prediction &lt;- predict(model_rf, traindata)
 cm &lt;- confusionMatrix(prediction, traindata$classe)
@@ -214,7 +212,7 @@ prediction &lt;- predict(model_rf, testdata)
 cm &lt;- confusionMatrix(prediction, testdata$classe)
 print(cm$overall)</code></pre>
 <pre><code>##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##      0.9923528      0.9903260      0.9901673      0.9941594      0.2844762 
+##      0.9932450      0.9914549      0.9911734      0.9949360      0.2844762 
 ## AccuracyPValue  McnemarPValue 
 ##      0.0000000            NaN</code></pre>
 </div>
@@ -246,22 +244,22 @@ prediction &lt;- predict(model_gbm, traindata)
 cm &lt;- confusionMatrix(prediction, traindata$classe)
 print(cm$overall)</code></pre>
 <pre><code>##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.763077e-01   9.700258e-01   9.733977e-01   9.789789e-01   2.843071e-01 
+##   9.757982e-01   9.693841e-01   9.728598e-01   9.784982e-01   2.843071e-01 
 ## AccuracyPValue  McnemarPValue 
-##   0.000000e+00   9.424265e-09</code></pre>
+##   0.000000e+00   2.837812e-10</code></pre>
 <pre class="r"><code># out-of-sample accuracy
 prediction &lt;- predict(model_gbm, testdata)
 cm &lt;- confusionMatrix(prediction, testdata$classe)
 print(cm$overall)</code></pre>
 <pre><code>##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.640581e-01   9.545311e-01   9.596994e-01   9.680675e-01   2.844762e-01 
+##   9.638032e-01   9.542143e-01   9.594306e-01   9.678267e-01   2.844762e-01 
 ## AccuracyPValue  McnemarPValue 
-##   0.000000e+00   1.404847e-09</code></pre>
+##   0.000000e+00   1.136466e-07</code></pre>
 </div>
 </div>
 <div id="method-choice" class="section level2">
 <h2>Method choice</h2>
-<p>As we can see more clearly in the following graph the Random Forest (<code>rf</code>) method reached the best accuracy overall.</p>
+<p>As we can see clearly in the following graph the Random Forest (<code>rf</code>) method reached the best accuracy overall.</p>
 <pre class="r"><code>model_accuracy &lt;- matrix(c(0.9928626, 0.9907414, 0.9946041, 0.4837806, 0.4747172, 0.4928520, 9.652052e-01, 9.609098e-01, 9.691503e-01), ncol=3, byrow=TRUE)
 colnames(model_accuracy) &lt;- c(&quot;Mean&quot;, &quot;Lower&quot;, &quot;Upper&quot;)
 rownames(model_accuracy) &lt;- c(&quot;rf&quot;, &quot;rpart&quot;, &quot;gbm&quot;)

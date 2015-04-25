@@ -55,12 +55,12 @@ nzv <- nearZeroVar(data_train)
 data_train <- data_train[,-nzv]
 ```
 
-By looking at the data we saw a lot of columns presenting missing values. We then removed also those columns.
+By looking at the data we saw a lot of columns presenting missing values. Then we removed also those columns.
 ```{r, message=FALSE}
 data_train <- data_train[, !apply(data_train , 2, function(x) any(is.na(x)))]
 ```
 
-After all this operations those were our selected features:
+After all these operations our selected features were as follows:
 
 ```{r, message=FALSE}
 str(data_train[,-53])
@@ -81,7 +81,7 @@ testdata <- data_train[-trainset,]
 
 ##Model evaluation
 
-We evaluated three different models, searching for the most accurate:
+We evaluated three different models, searching for the most accurate one:
 
 * Classification Tree (`rpart`)
 * Random Forest (`parRF`)
@@ -148,7 +148,7 @@ print(cm$overall)
 ```
 ##Method choice
 
-As we can see more clearly in the following graph the Random Forest (`rf`) method reached the best accuracy overall.
+As we can see clearly in the following graph the Random Forest (`rf`) method reached the best accuracy overall.
 
 ```{r, message=FALSE}
 model_accuracy <- matrix(c(0.9928626, 0.9907414, 0.9946041, 0.4837806, 0.4747172, 0.4928520, 9.652052e-01, 9.609098e-01, 9.691503e-01), ncol=3, byrow=TRUE)
